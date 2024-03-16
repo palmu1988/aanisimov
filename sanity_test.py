@@ -1,28 +1,60 @@
 import requests
+from requests import JSONDecodeError
 
-# Функция для отправки POST-запросов с заголовком авторизации
-def send_post(method: str, token: str):
-    request_body = {"method": method, "jsonrpc": "2.0", "id": 1}
-    headers = {
-        'Authorization': f'Bearer {token}'  # Добавляем заголовок авторизации
-    }
-    res = requests.post("http://localhost:9898/rpc", json=request_body, headers=headers)
-    return res.json()
 
-# Остальные функции без изменений
+def make_valid_payload(method: str, params: dict | None = None) -> dict:
+    payload = {"method": method, "jsonrpc": "2.0", "id": 1}
+
+    if params:
+        payload["params"] = params
+    return payload
+
+
+def send_post(
+    method: str | None = None,
+    params: dict | None = None,
+    jsonrpc: str | None = None,
+    id: int | None = None,
+):
+    request_body = {}
+
+    if method:
+        request_body["method"] = method
+    if params:
+        request_body["params"] = params
+    if jsonrpc:
+        request_body["jsonrpc"] = jsonrpc
+    if id:
+        request_body["id"] = id
+
+    request_headers = {"Authorization": "0000"}
+    res = requests.post(
+        "http://localhost:9898/rpc", json=request_body, headers=request_headers
+    )
+
+    try:
+        return res.json()
+    except JSONDecodeError:
+        return {}
+
 
 def get_sensor_info():
-    sensor_response = send_post(method="get_info", token="0000")
-    sensor_info = sensor_response["result"]
+    payload = make_valid_payload(method="get_info")
+    sensor_response = send_post(**payload)
+    sensor_info = sensor_response.get("result", {})
     return sensor_info
 
+
 def get_sensor_reading():
-    sensor_response = send_post(method="get_reading", token="0000")
-    sensor_reading = sensor_response["result"]
+    payload = make_valid_payload(method="get_reading")
+    sensor_response = send_post(**payload)
+    sensor_reading = sensor_response.get("result", {})
     return sensor_reading
+
 
 def test_sanity():
     sensor_info = get_sensor_info()
+
     sensor_name = sensor_info.get("name")
     assert isinstance(sensor_name, str), "Sensor name is not a string"
     sensor_hid = sensor_info.get("hid")
@@ -30,9 +62,15 @@ def test_sanity():
     sensor_model = sensor_info.get("model")
     assert isinstance(sensor_model, str), "Sensor model is not a string"
     sensor_firmware_version = sensor_info.get("firmware_version")
-    assert isinstance(sensor_firmware_version, float), "Sensor firmware version is not a string"
+    assert isinstance(
+        sensor_firmware_version, int
+    ), "Sensor firmware version is not a string"
     sensor_reading_interval = sensor_info.get("reading_interval")
-    assert isinstance(sensor_reading_interval, int), "Sensor reading interval is not a string"
+    assert isinstance(
+        sensor_reading_interval, int
+    ), "Sensor reading interval is not a string"
     sensor_reading = get_sensor_reading()
-    assert isinstance(sensor_reading, float), "Sensor doesn't seem to register temperature"
+    assert isinstance(
+        sensor_reading, float
+    ), "Sensor doesn't seem to register temperature"
     print("Sanity test passed")
