@@ -1,5 +1,5 @@
 import requests
-from requests import JSONDecodeError
+from requests.exceptions import JSONDecodeError
 
 
 def make_valid_payload(method: str, params: dict | None = None) -> dict:
