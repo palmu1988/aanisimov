@@ -9,6 +9,10 @@ def make_valid_payload(method: str, params: dict | None = None) -> dict:
         payload["params"] = params
     return payload
 
+def make_valid_request(method: str, params: dict | None = None) -> dict:
+    payload = make_valid_payload(method=method, params=params)
+    sensor_response = send_post(**payload)
+    return sensor_response.get("result", {})
 
 def send_post(
     method: str | None = None,
@@ -39,10 +43,7 @@ def send_post(
 
 
 def get_sensor_info():
-    payload = make_valid_payload(method="get_info")
-    sensor_response = send_post(**payload)
-    sensor_info = sensor_response.get("result", {})
-    return sensor_info
+    return make_valid_request("get_info")
 
 
 def get_sensor_reading():
