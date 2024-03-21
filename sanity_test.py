@@ -1,11 +1,3 @@
-def test_sanity(
-    get_sensor_info,
-    get_sensor_reading,
-    set_sensor_name,
-    set_reading_interval,
-    reset_to_factory,
-):
-
     set_sensor_name("Updated_sensor_name")
 
     set_reading_interval(4)
