@@ -1,6 +1,14 @@
+def test_sanity(
+    get_sensor_info,
+    get_sensor_reading,
+    set_sensor_name,
+    set_reading_interval,
+    reset_to_factory,
+):
+
     set_sensor_name("Updated_sensor_name")
 
-    set_reading_interval(4)
+    set_reading_interval(5)
 
     sensor_info = get_sensor_info()
 
@@ -25,7 +33,7 @@
         sensor_reading_interval, int
     ), "Sensor reading interval is not a string"
 
-    assert sensor_reading_interval == 4, "Sensor reading interval was not updated"
+    assert sensor_reading_interval == 5, "Sensor reading interval was not updated"
 
     sensor_reading = get_sensor_reading()
     assert isinstance(
