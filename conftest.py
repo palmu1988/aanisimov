@@ -13,9 +13,7 @@ class SensorMethod(Enum):
     REBOOT = "reboot"
 
 
-def make_valid_payload(
-    method: SensorMethod, params: dict | None = None
-) -> dict:
+def make_valid_payload(method: SensorMethod, params: dict | None = None) -> dict:
     payload = {"method": method, "jsonrpc": "2.0", "id": 1}
 
     if params:
@@ -34,9 +32,7 @@ def pytest_addoption(parser):
     parser.addoption(
         "--sensor-port", action="store", default="9898", help="Sensor port"
     )
-    parser.addoption(
-        "--sensor-pin", action="store", default="0000", help="Sensor pin"
-    )
+    parser.addoption("--sensor-pin", action="store", default="0000", help="Sensor pin")
 
 
 @pytest.fixture
@@ -121,12 +117,16 @@ def set_sensor_name(make_valid_request):
 
     return inner
 
+
 @pytest.fixture
 def set_reading_interval(make_valid_request):
     def inner(interval: int):
-        return make_valid_request(SensorMethod.SET_READING_INTERVAL, {"interval": interval})
+        return make_valid_request(
+            SensorMethod.SET_READING_INTERVAL, {"interval": interval}
+        )
 
     return inner
+
 
 @pytest.fixture
 def reset_to_factory(make_valid_request):
@@ -135,12 +135,14 @@ def reset_to_factory(make_valid_request):
 
     return inner
 
+
 @pytest.fixture
 def update_firmware(make_valid_request):
     def inner():
         return make_valid_request(SensorMethod.UPDATE_FIRMWARE)
 
     return inner
+
 
 @pytest.fixture
 def reboot(make_valid_request):
