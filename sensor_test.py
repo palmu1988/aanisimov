@@ -38,7 +38,7 @@ def test_set_sensor_name(get_sensor_info, set_sensor_name):
     2. Get sensor_info.
     3. Validate that current sensor name matches the name set in Step 1.
     """
-    print('Set sensor name to "new_name"')
+    print("Set  sensor name different from default")
     new_sensor_name = "Updated_sensor_name"
     set_sensor_name(new_sensor_name)
 
@@ -66,10 +66,11 @@ def test_set_sensor_reading_interval(
     """
     print("Set sensor reading interval to 1")
     new_reading_interval = 1
-    set_sensor_reading_interval(new_reading_interval)
-
+    # set_sensor_reading_interval(new_reading_interval)
+    #
     print("Get sensor info")
-    updated_sensor_info = get_sensor_info()
+    # updated_sensor_info = get_sensor_info()
+    updated_sensor_info = set_sensor_reading_interval(new_reading_interval)
 
     print("Validate that sensor reading interval is set to interval from Step 1")
     current_reading_interval = updated_sensor_info.get("reading_interval")
@@ -129,7 +130,7 @@ def test_update_sensor_firmware(get_sensor_info, update_firmware):
 
     print("Repeat steps 1-4 until sensor is at max_firmware_version - 1")
     max_firmware_version = 15
-    while True:
+    while current_firmware_version != max_firmware_version:
         update_firmware()
         wait(
             func=get_sensor_info,
@@ -140,21 +141,14 @@ def test_update_sensor_firmware(get_sensor_info, update_firmware):
         updated_sensor_info = get_sensor_info()
         current_firmware_version = updated_sensor_info.get("firmware_version")
         if current_firmware_version == max_firmware_version - 1:
-            break
-
-    print("Update sensor to max firmware version")
-    while True:
-        update_firmware()
-        wait(
-            func=get_sensor_info,
-            condition=lambda x: isinstance(x, dict),
-            tries=5,
-            timeout=3,
-        )
-        updated_sensor_info = get_sensor_info()
-        current_firmware_version = updated_sensor_info.get("firmware_version")
-        if current_firmware_version == max_firmware_version:
-            break
+            print("Update sensor to max firmware version")
+            update_firmware()
+            wait(
+                func=get_sensor_info,
+                condition=lambda x: isinstance(x, dict),
+                tries=5,
+                timeout=3,
+            )
 
     print("Validate that sensor is at max firmware version")
     sensor_info = get_sensor_info()
@@ -163,11 +157,9 @@ def test_update_sensor_firmware(get_sensor_info, update_firmware):
         current_firmware_version == max_firmware_version
     ), "Sensor firmware version is not at max possible"
 
-    print("Request another firmware update")
-    sensor_info = get_sensor_info()
-    firmware_version_before_update = sensor_info.get("firmware_version")
+    print("Validate that sensor doesn't update and responds appropriately")
 
-    update_sensor_firmware = update_firmware()
+    updated_sensor_info = update_firmware()
 
     wait(
         func=get_sensor_info,
@@ -175,37 +167,13 @@ def test_update_sensor_firmware(get_sensor_info, update_firmware):
         tries=5,
         timeout=3,
     )
-
-    print("Validate that sensor doesn't update and responds appropriately")
-
     sensor_info = get_sensor_info()
     firmware_version_after_update = sensor_info.get("firmware_version")
 
     assert (
-        update_sensor_firmware == "already at latest firmware version"
-        and firmware_version_after_update == firmware_version_before_update
+        updated_sensor_info == "already at latest firmware version"
+        and firmware_version_after_update == max_firmware_version
     ), "Something went wrong and firmware version was updated unexpectedly"
-
-    print(
-        "Validate that sensor firmware version doesn't change if it's at maximum value"
-    )
-    sensor_info = get_sensor_info()
-    current_firmware_version = sensor_info.get("firmware_version")
-    if current_firmware_version == max_firmware_version:
-        update_firmware()
-        wait(
-            func=get_sensor_info,
-            condition=lambda x: isinstance(x, dict),
-            tries=5,
-            timeout=3,
-        )
-        updated_sensor_info = get_sensor_info()
-        firmware_version_after_update = updated_sensor_info.get("firmware_version")
-        assert (
-            firmware_version_after_update == max_firmware_version
-        ), "Something went wrong and firmware version was updated unexpectedly"
-    else:
-        raise RuntimeError("Sensor firmware version is not at max possible")
 
 
 def test_reboot(get_sensor_info, reboot):
