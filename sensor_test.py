@@ -1,5 +1,8 @@
 from time import sleep
 from conftest import wait
+import logging
+
+log = logging.getLogger(__name__)
 
 
 def test_sanity(get_sensor_info, get_sensor_reading):
@@ -29,7 +32,7 @@ def test_sanity(get_sensor_info, get_sensor_reading):
         sensor_reading, float
     ), "Sensor doesn't seem to register temperature"
 
-    print("Sanity test passed")
+    log.info("Sanity test passed")
 
 
 def test_set_sensor_name(get_sensor_info, set_sensor_name):
@@ -38,14 +41,14 @@ def test_set_sensor_name(get_sensor_info, set_sensor_name):
     2. Get sensor_info.
     3. Validate that current sensor name matches the name set in Step 1.
     """
-    print("Set  sensor name different from default")
+    log.info("Set  sensor name different from default")
     new_sensor_name = "Updated_sensor_name"
     set_sensor_name(new_sensor_name)
 
-    print("Get sensor_info")
+    log.info("Get sensor_info")
     updated_sensor_info = get_sensor_info()
 
-    print("Validate that current sensor name matches the name set in Step 1")
+    log.info("Validate that current sensor name matches the name set in Step 1")
     current_sensor_name = updated_sensor_info.get("name")
     assert (
         current_sensor_name == new_sensor_name
@@ -64,26 +67,26 @@ def test_set_sensor_reading_interval(
     6. Get sensor reading.
     7. Validate that reading from Step 4 doesn't equal reading from Step 6.
     """
-    print("Set sensor reading interval to 1")
+    log.info("Set sensor reading interval to 1")
     new_reading_interval = 1
     updated_sensor_info = set_sensor_reading_interval(new_reading_interval)
 
-    print("Validate that sensor reading interval is set to interval from Step 1")
+    log.info("Validate that sensor reading interval is set to interval from Step 1")
     current_reading_interval = updated_sensor_info.get("reading_interval")
     assert (
         current_reading_interval == new_reading_interval
     ), f"Sensor reading interval was not updated, expected interval {new_reading_interval}"
 
-    print("Get sensor reading")
+    log.info("Get sensor reading")
     sensor_reading_before_wait = get_sensor_reading()
 
-    print("Wait for interval specified in Step 1")
+    log.info("Wait for interval specified in Step 1")
     sleep(new_reading_interval)
 
-    print("Get sensor reading")
+    log.info("Get sensor reading")
     sensor_reading_after_wait = get_sensor_reading()
 
-    print("Validate that reading from tep 4 doesn't equal reading from Step 6")
+    log.info("Validate that reading from tep 4 doesn't equal reading from Step 6")
     assert (
         sensor_reading_before_wait != sensor_reading_after_wait
     ), f"Sensor readings after {new_reading_interval} second of waiting are equal to readings before waiting"
@@ -103,15 +106,15 @@ def test_update_sensor_firmware(get_sensor_info, update_firmware):
     10. Validate that sensor firmware version doesn't change if it's at maximum value.
     """
 
-    print("Upgrade firmware version +1")
+    log.info("Upgrade firmware version +1")
     max_firmware_version = 15
     current_firmware_version = None
 
     while current_firmware_version != max_firmware_version:
         sensor_info = get_sensor_info()
-        print("Get original sensor firmware version")
+        log.info("Get original sensor firmware version")
         firmware_version_before_update = sensor_info.get("firmware_version")
-        print("Request firmware update")
+        log.info("Request firmware update")
         update_firmware()
         wait(
             func=get_sensor_info,
@@ -120,17 +123,17 @@ def test_update_sensor_firmware(get_sensor_info, update_firmware):
             timeout=1,
         )
         updated_sensor_info = get_sensor_info()
-        print("Get current sensor firmware version")
+        log.info("Get current sensor firmware version")
         current_firmware_version = updated_sensor_info.get("firmware_version")
-        print(
+        log.info(
             "Validate that current firmware version is +1 to previous firmware version"
         )
         assert (
             current_firmware_version == firmware_version_before_update + 1
         ), "Sensor firmware version was not updated"
-        print(f"Current firmware version: {current_firmware_version}")
+        log.info(f"Current firmware version: {current_firmware_version}")
 
-    print("Request another firmware update")
+    log.info("Request another firmware update")
     updated_sensor_info = update_firmware()
 
     wait(
@@ -142,7 +145,7 @@ def test_update_sensor_firmware(get_sensor_info, update_firmware):
     sensor_info = get_sensor_info()
     firmware_version_after_update = sensor_info.get("firmware_version")
 
-    print("Validate that sensor doesn't update and responds appropriately")
+    log.info("Validate that sensor doesn't update and responds appropriately")
     assert (
         updated_sensor_info == "already at latest firmware version"
         and firmware_version_after_update == max_firmware_version
@@ -158,16 +161,16 @@ def test_reboot(get_sensor_info, reboot):
         4. Get current sensor info.
         5. Validate that info from Step 1 is equal to info from Step 4.
     """
-    print("Get original sensor info")
+    log.info("Get original sensor info")
     sensor_info_before_reboot = get_sensor_info()
 
-    print("Reboot sensor")
+    log.info("Reboot sensor")
     reboot_response = reboot()
     assert (
         reboot_response == "rebooting"
     ), "Sensor did not return proper text in response to reboot request..."
 
-    print("Wait for sensor to come back online")
+    log.info("Wait for sensor to come back online")
     sensor_info_after_reboot = wait(
         func=get_sensor_info,
         condition=lambda x: isinstance(x, dict),
@@ -175,7 +178,7 @@ def test_reboot(get_sensor_info, reboot):
         timeout=1,
     )
 
-    print("Validate that info from Step 1 is equal to info from Step 4")
+    log.info("Validate that info from Step 1 is equal to info from Step 4")
     assert (
         sensor_info_before_reboot == sensor_info_after_reboot
     ), "Sensor info after reboot does not match sensor info before reboot"
