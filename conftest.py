@@ -1,11 +1,41 @@
 import pytest
 from enum import Enum
+from dataclasses import dataclass
 import requests
 from typing import Callable
 from time import sleep
 import logging
 
 log = logging.getLogger(__name__)
+
+
+@dataclass
+class SensorInfo:
+    name: str
+    hid: str
+    model: str
+    firmware_version: int
+    reading_interval: int
+
+    def __post_init__(self):
+        if not isinstance(self.name, str):
+            raise TypeError("'name' should be a string")
+        if self.name == "":
+            raise ValueError("'name' should not be empty")
+        if not isinstance(self.hid, str):
+            raise TypeError("'hid' should be a string")
+        if self.hid == "":
+            raise ValueError("'hid' should not be empty")
+        if not isinstance(self.model, str):
+            raise TypeError("'model' should be a string")
+        if self.model == "":
+            raise ValueError("'model' should not be empty")
+        if not isinstance(self.firmware_version, int):
+            raise TypeError("'firmware_version' should be an integer")
+        if not isinstance(self.reading_interval, int):
+            raise TypeError("'reading_interval' should be a int")
+        if self.reading_interval == "":
+            raise ValueError("'reading_interval' should not be empty")
 
 
 class SensorMethod(Enum):
@@ -126,7 +156,8 @@ def make_valid_request(send_post):
 def get_sensor_info(make_valid_request):
     def _get_sensor_info():
         log.info("Get sensor info")
-        return make_valid_request(SensorMethod.GET_INFO)
+        sensor_response = make_valid_request(SensorMethod.GET_INFO)
+        return SensorInfo(**sensor_response)
 
     return _get_sensor_info
 
@@ -178,7 +209,7 @@ def reset_sensor_to_factory(make_valid_request, get_sensor_info):
             raise RuntimeError("Sensor didn't respond to factory reset properly")
 
         sensor_info = wait(
-            get_sensor_info, lambda x: isinstance(x, dict), tries=15, timeout=1
+            get_sensor_info, lambda x: isinstance(x, SensorInfo), tries=15, timeout=1
         )
         if not sensor_info:
             raise RuntimeError("Sensor didn't reset to factory property")
