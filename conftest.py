@@ -32,10 +32,12 @@ class SensorInfo:
             raise ValueError("'model' should not be empty")
         if not isinstance(self.firmware_version, int):
             raise TypeError("'firmware_version' should be an integer")
+        if not 10 <= self.firmware_version <= 15:
+            raise ValueError("'firmware_version' is out of valid range")
         if not isinstance(self.reading_interval, int):
             raise TypeError("'reading_interval' should be a int")
-        if self.reading_interval == "":
-            raise ValueError("'reading_interval' should not be empty")
+        if not self.reading_interval >= 1:
+            raise ValueError("'reading_interval' is out of valid range")
 
 
 class SensorMethod(Enum):
