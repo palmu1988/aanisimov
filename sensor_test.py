@@ -1,6 +1,7 @@
 from time import sleep
 from conftest import wait
 import logging
+import json
 
 log = logging.getLogger(__name__)
 
@@ -55,6 +56,37 @@ def test_set_sensor_name(get_sensor_info, set_sensor_name):
     ), f"Sensor name was not updated, expected name:{new_sensor_name}"
 
 
+def test_set_empty_sensor_name(get_sensor_info, set_sensor_name):
+    """
+    1. Get original sensor name.
+    2. Set sensor name to an empty string.
+    3. Validate that sensor responds with an error.
+    4. Get current sensor name.
+    5. Validate that sensor name didn't change.
+    """
+
+    log.info("Get original sensor name")
+    sensor_info = get_sensor_info()
+    original_sensor_name = sensor_info.name
+
+    log.info("Set sensor name to an empty string")
+    set_empty_sensor_name = set_sensor_name("")
+
+    log.info("Validate that sensor responds with an error")
+    assert (
+        set_empty_sensor_name.get("message") == "Method execution error"
+    ), "Expected method execution error!"
+
+    log.info("Get current sensor name")
+    sensor_info = get_sensor_info()
+    current_sensor_name = sensor_info.name
+
+    log.info("Validate that sensor name didn't change")
+    assert (
+        original_sensor_name == current_sensor_name
+    ), "Sensor name was unexpectedly updated"
+
+
 def test_set_sensor_reading_interval(
     get_sensor_info, set_sensor_reading_interval, get_sensor_reading
 ):
@@ -90,6 +122,43 @@ def test_set_sensor_reading_interval(
     assert (
         sensor_reading_before_wait != sensor_reading_after_wait
     ), f"Sensor readings after {new_reading_interval} second of waiting are equal to readings before waiting"
+
+
+def test_set_invalid_sensor_reading_interval(
+    get_sensor_info, set_sensor_reading_interval
+):
+    """
+    1. Get original sensor reading interval.
+    2. Set interval to < 1
+    3. Validate that sensor responds with an error.
+    4. Get current sensor reading interval.
+    5. Validate that sensor reading interval didn't change.
+    """
+
+    log.info("Get original sensor reading interval.")
+    sensor_info = get_sensor_info()
+    original_sensor_reading_interval = sensor_info.reading_interval
+
+    log.info("Set interval to < 1")
+    invalid_reading_interval = 0.1
+    set_invalid_reading_interval = set_sensor_reading_interval(invalid_reading_interval)
+
+    log.info("Validate that sensor responds with an error")
+    if "error" in set_invalid_reading_interval:
+        assert (
+            set_invalid_reading_interval.get("message") == "Method execution error"
+        ), "Expected method execution error!"
+    else:
+        log.info("No error received, continuing execution")
+
+    log.info("Get current sensor reading interval")
+    sensor_info = get_sensor_info()
+    current_sensor_reading_interval = sensor_info.reading_interval
+
+    log.info("Validate that sensor reading interval didn't change")
+    assert (
+        original_sensor_reading_interval == current_sensor_reading_interval
+    ), "Sensor reading interval is out of valid range!"
 
 
 def test_update_sensor_firmware(get_sensor_info, update_firmware):

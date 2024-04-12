@@ -149,7 +149,7 @@ def make_valid_request(send_post):
     def _make_valid_request(method: SensorMethod, params: dict | None = None) -> dict:
         payload = make_valid_payload(method=method, params=params)
         sensor_response = send_post(**payload)
-        return sensor_response.get("result", {})
+        return sensor_response.get("result", {}) or sensor_response.get("error", {})
 
     return _make_valid_request
 
