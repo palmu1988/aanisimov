@@ -70,15 +70,11 @@ def test_set_empty_sensor_name(get_sensor_info, set_sensor_name):
     original_sensor_name = sensor_info.name
 
     log.info("Set sensor name to an empty string")
-    set_empty_sensor_name = set_sensor_name("")
+    set_empty_sensor_name_response = set_sensor_name("")
 
-    log.info("Validate that sensor responds with an error")
-    if "error" in set_empty_sensor_name:
-        assert (
-            set_empty_sensor_name.get("message") == "Method execution error"
-        ), "Expected method execution error!"
-    else:
-        log.info("No error received, continuing execution")
+    assert (
+        set_empty_sensor_name_response == {}
+    ), "Sensor name was set to empty unexpectedly!"
 
     log.info("Get current sensor name")
     sensor_info = get_sensor_info()
@@ -142,15 +138,13 @@ def test_set_invalid_sensor_reading_interval(
 
     log.info("Set interval to < 1")
     invalid_reading_interval = 0.1
-    set_invalid_reading_interval = set_sensor_reading_interval(invalid_reading_interval)
+    set_invalid_reading_interval_response = set_sensor_reading_interval(
+        invalid_reading_interval
+    )
 
-    log.info("Validate that sensor responds with an error")
-    if "error" in set_invalid_reading_interval:
-        assert (
-            set_invalid_reading_interval.get("message") == "Method execution error"
-        ), "Expected method execution error!"
-    else:
-        log.info("No error received, continuing execution")
+    assert (
+        set_invalid_reading_interval_response == {}
+    ), "Sensor name was set to empty unexpectedly!"
 
     log.info("Get current sensor reading interval")
     sensor_info = get_sensor_info()
