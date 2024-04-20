@@ -1,9 +1,11 @@
 from time import sleep
 from conftest import wait
 import logging
-import json
+import pytest
 
 log = logging.getLogger(__name__)
+METHOD_ERROR_CODE = -32000
+METHOD_ERROR_MSG = "Method execution error"
 
 
 def test_sanity(get_sensor_info, get_sensor_reading):
@@ -72,9 +74,17 @@ def test_set_empty_sensor_name(get_sensor_info, set_sensor_name):
     log.info("Set sensor name to an empty string")
     set_empty_sensor_name_response = set_sensor_name("")
 
+    assert set_empty_sensor_name_response.get(
+        "code"
+    ) and set_empty_sensor_name_response.get(
+        "message"
+    ), "Sensor response doesn't seem to be an error"
     assert (
-        set_empty_sensor_name_response == {}
-    ), "Sensor name was set to empty unexpectedly!"
+        set_empty_sensor_name_response.get("code") == METHOD_ERROR_CODE
+    ), "Error code does not match expected"
+    assert (
+        set_empty_sensor_name_response.get("message") == METHOD_ERROR_MSG
+    ), "Error message does not match expected"
 
     log.info("Get current sensor name")
     sensor_info = get_sensor_info()
@@ -101,9 +111,8 @@ def test_set_sensor_reading_interval(
     updated_sensor_info = set_sensor_reading_interval(new_reading_interval)
 
     log.info("Validate that sensor reading interval is set to interval from Step 1")
-    current_reading_interval = updated_sensor_info.get("reading_interval")
     assert (
-        current_reading_interval == new_reading_interval
+        updated_sensor_info.reading_interval == new_reading_interval
     ), f"Sensor reading interval was not updated, expected interval {new_reading_interval}"
 
     log.info("Get sensor reading")
@@ -121,8 +130,9 @@ def test_set_sensor_reading_interval(
     ), f"Sensor readings after {new_reading_interval} second of waiting are equal to readings before waiting"
 
 
+@pytest.mark.parametrize("invalid_reading_interval", [0.3, -1])
 def test_set_invalid_sensor_reading_interval(
-    get_sensor_info, set_sensor_reading_interval
+    get_sensor_info, set_sensor_reading_interval, invalid_reading_interval
 ):
     """
     1. Get original sensor reading interval.
@@ -137,14 +147,20 @@ def test_set_invalid_sensor_reading_interval(
     original_sensor_reading_interval = sensor_info.reading_interval
 
     log.info("Set interval to < 1")
-    invalid_reading_interval = 0.1
     set_invalid_reading_interval_response = set_sensor_reading_interval(
         invalid_reading_interval
     )
-
+    assert set_invalid_reading_interval_response.get(
+        "code"
+    ) and set_invalid_reading_interval_response.get(
+        "message"
+    ), "Sensor response doesn't seem to be an error"
     assert (
-        set_invalid_reading_interval_response == {}
-    ), "Sensor name was set to empty unexpectedly!"
+        set_invalid_reading_interval_response.get("code") == METHOD_ERROR_CODE
+    ), "Error code does not match expected"
+    assert (
+        set_invalid_reading_interval_response.get("message") == METHOD_ERROR_MSG
+    ), "Error message does not match expected"
 
     log.info("Get current sensor reading interval")
     sensor_info = get_sensor_info()
