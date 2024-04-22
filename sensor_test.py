@@ -3,9 +3,19 @@ from conftest import wait
 import logging
 import pytest
 
+from requests import post
+
 log = logging.getLogger(__name__)
 METHOD_ERROR_CODE = -32000
 METHOD_ERROR_MSG = "Method execution error"
+PARSE_ERROR_CODE = -32700
+PARSE_ERROR_MSG = "Parse error"
+INVALID_REQUEST_CODE = -32600
+INVALID_REQUEST_MSG = "Invalid request"
+METHOD_NOT_FOUND_CODE = -32601
+METHOD_NOT_FOUND_MSG = "Method not found"
+INVALID_PARAMS_CODE = -32602
+INVALID_PARAMS_MSG = "Invalid params"
 
 
 def test_sanity(get_sensor_info, get_sensor_reading):
@@ -170,6 +180,74 @@ def test_set_invalid_sensor_reading_interval(
     assert (
         original_sensor_reading_interval == current_sensor_reading_interval
     ), "Sensor reading interval is out of valid range!"
+
+
+@pytest.mark.parametrize(
+    "payload,expected_error_code,expected_error_msg",
+    [
+        (
+            '{"method": "get_methods" "jsonrpc": "2.0", "id": 1}',
+            PARSE_ERROR_CODE,
+            PARSE_ERROR_MSG,
+        ),
+        (
+            '{"method": "get_methods", "jsonrpc": "1.0", "id": 1}',
+            INVALID_REQUEST_CODE,
+            INVALID_REQUEST_MSG,
+        ),
+        (
+            '{"method": "get_method", "jsonrpc": "2.0", "id": 1}',
+            METHOD_NOT_FOUND_CODE,
+            METHOD_NOT_FOUND_MSG,
+        ),
+        (
+            '{"method": "set_reading_interval", "params": {"intervall":  1 }, "jsonrpc": "2.0", "id": 1}',
+            INVALID_PARAMS_CODE,
+            INVALID_PARAMS_MSG,
+        ),
+        (
+            '{"method": "set_name", "params": {"name":  "" }, "jsonrpc": "2.0", "id": 1}',
+            METHOD_ERROR_CODE,
+            METHOD_ERROR_MSG,
+        ),
+    ],
+)
+def test_sensor_errors(
+    sensor_host,
+    sensor_port,
+    sensor_pin,
+    payload,
+    expected_error_code,
+    expected_error_msg,
+):
+    sensor_response = post(
+        f"{sensor_host}:{sensor_port}/rpc",
+        data=payload,
+        headers={"Authorization": sensor_pin},
+    )
+
+    log.info("Check that the sensor responds with HTTP code 200")
+    assert (
+        sensor_response.status_code == 200
+    ), "Wrong status code from sensor in response in invalid request"
+
+    sensor_response_json = sensor_response.json()
+
+    log.info("Check that the sensor responds with error")
+    assert (
+        "error" in sensor_response_json
+    ), "Sensor did not respond with error to invalid request"
+
+    error_from_sensor = sensor_response_json["error"]
+
+    log.info("Check that the sensor responds with the correct error code")
+    assert (
+        error_from_sensor.get("code") == expected_error_code
+    ), "Sensor did not respond with correct error code"
+    log.info("Check that the sensor responds with the correct error message")
+    assert (
+        error_from_sensor.get("message") == expected_error_msg
+    ), "Sensor did not respond with correct error message"
 
 
 def test_update_sensor_firmware(get_sensor_info, update_firmware):
